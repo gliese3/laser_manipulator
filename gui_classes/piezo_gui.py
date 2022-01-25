@@ -52,6 +52,8 @@ class PiezoManipulation(tk.Frame):
         
         self.save_r_lf5_var = tk.IntVar(value=1) # save file for R
         self.save_theta_lf5_var = tk.IntVar(value=0) # save file for Theta
+
+        self.mirror_correction_var = tk.IntVar(value=0) # for mirror corection for spectra
         
         self.file_name = tk.StringVar()
         
@@ -836,6 +838,16 @@ class PiezoManipulation(tk.Frame):
         Hovertip(self.fast_mode_checkbut_lf6, "When checked the program will run \
 as fast as it can while disabling\nsome tracking functions and emergency abort")
         
+        # CHECKBUTTON MIRROR CORRECTION
+        self.mirror_correction_checkbut_lf6 = ttk.Checkbutton(self.lf6,
+                                        text="Mirror correction",
+                                        variable=self. mirror_correction_var ,
+                                        onvalue=1,
+                                        offvalue=0)
+        self.mirror_correction_checkbut_lf6.grid(column=0, 
+                                               row=2, 
+                                               padx=5,
+                                               sticky="W")
         
         #*++++++++++++++++++++++ /SETTIGNS ++++++++++++++++++++++++++++++++++++
 
@@ -1904,11 +1916,38 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
         total_time_min = 0 # for time accumulation 
         
         need_write_to_console = self.log_to_console_var_fr_sp.get()
+
+
+        # for mirror position correction
+        need_mirror_correction = self.mirror_correction_var.get()    
+        if need_mirror_correction and (self.wavenum_pattern[0] > 1625 or
+                                    self.wavenum_pattern[-1] < 1825):
+            try: 
+                import newport
+                self.picomotor = newport.Controller(0x4000,0x104d)
+                self.picomotor.command('4DH')
+                self.interval_reverse = 0
+            except Exception as e:
+                showerror(message=e)
         
         # move the piezo over the scan area
         for step, index in enumerate(np.ndindex(scan_shape)):
             try:
                 t1 = time() # start time
+
+                wavenum_val = self.wavenum_pattern[index]
+
+                # mirror correction functions
+                if need_mirror_correction:
+                    self.mirror_correction(wavenum_val, (1625, 1628), motor_step=-100, sleep_time=5)
+                    self.mirror_correction(wavenum_val, (1650, 1653), motor_step=-200, sleep_time=5)
+                    self.mirror_correction(wavenum_val, (1712, 1715), motor_step=-750, sleep_time=5)
+                    self.mirror_correction(wavenum_val, (1730, 1733), motor_step=-750, sleep_time=5)
+                    self.mirror_correction(wavenum_val, (1745, 1748), motor_step=-250, sleep_time=5)
+                    self.mirror_correction(wavenum_val, (1765, 1768), motor_step=-350, sleep_time=5)
+                    self.mirror_correction(wavenum_val, (1785, 1788), motor_step=-100, sleep_time=5)
+                    self.mirror_correction(wavenum_val, (1825, 1828), motor_step= 300, sleep_time=5)
+                    
                 
                 if self.fast_mode_var.get() == 0:
                     self.read_current_wavenumber(self.ff3)
@@ -1949,7 +1988,6 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 
                 sample_x = float(sample['x'])
                 sample_y = float(sample['y'])
-                wavenum_val = self.wavenum_pattern[index]
                 
                 # extract R value from sample data
                 r_value = np.hypot(sample_x, sample_y) # sqrt(x^2 + y^2)
@@ -2003,6 +2041,12 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
         initial_wavenum = self.wavenum_pattern[0]
         self.ff3.go_to_wavelength(initial_wavenum)
         self.read_current_wavenumber(self.ff3, final_wavenumber=initial_wavenum)
+
+        if need_mirror_correction:
+            self.picomotor.command('4DH')
+            self.picomotor.command('4PA' + str(- self.interval_reverse))
+            sleep(3)
+            self.picomotor.command('4DH')
         
         # add R norm
         r_data_norm = r_data / np.max(r_data)
@@ -2015,13 +2059,6 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
         
         # disable "theta" checkbutton when save
         self.save_theta_checkbut_lf5.configure(state="disable")
-
-            # maybe not needed
-            # try:
-            #     self.piezo_stop() # stop piezo
-            # except Exception:
-            #     showerror(message="Error stopping piezo after imaging!")
-
 
     def is_spec_param_good(self, wavenum1, wavenum2, delta_wavenum):
         """
@@ -2075,3 +2112,13 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
                     
             except Exception as e:
                 showerror(message=e)
+
+    def mirror_correction(self, wavenum_val, wavenum_range, motor_step, sleep_time=5):
+        if wavenum_range[0] < wavenum_val < wavenum_range[-1]:
+            self.picomotor.command('4DH')
+            self.picomotor.command('4PA' + str(motor_step))
+            sleep(sleep_time)
+            self.picomotor.command('4DH')
+            self.interval_reverse += motor_step
+        else:
+            pass
