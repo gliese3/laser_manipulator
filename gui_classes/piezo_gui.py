@@ -2094,7 +2094,7 @@ re-check it manually before next experiment!")
 
     def mirror_correction(self, wavenum_val):
         """
-        Corrects mirror position to mitigate physical issues.
+        Corrects mirror position to mitigate some physical issues.
 
         """
 
@@ -2104,11 +2104,28 @@ re-check it manually before next experiment!")
         if wavenum_val >= wavenum_border:
             self.picomotor.command('4DH')
             self.picomotor.command('4PA' + str(dict_val["motor_step"]))
+
+            # show window
+            top = tk.Toplevel()
+            top.geometry("300x120+800+500")
+            top.title("")
+            lab = tk.Label(top, text = "Mirror correction is in progress...")
+            lab.grid(column=0, row=0)
+
+            # to center label
+            top.rowconfigure(0, weight=1)
+            top.columnconfigure(0, weight=1)
+
+            top.grab_set() # focus on that window
+
             sleep(dict_val["sleep_time"])
+
+            top.withdraw() # remove window
+
             self.picomotor.command('4DH')
             self.interval_reverse += dict_val["motor_step"]
 
-            # delete element if correction procedure was done successfully
+            # delete last element if correction procedure was done successfully
             self.mirror_correction_map_used.pop() 
         else:
             pass
