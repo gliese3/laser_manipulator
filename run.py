@@ -21,10 +21,10 @@ def on_closing():
 
 try:
     root = tk.Tk()
-    root.iconphoto(False, tk.PhotoImage(file=_parent_dir + "\images\laser.png"))
+    root.iconphoto(False, tk.PhotoImage(file=_parent_dir + os.sep + 
+    "images" + os.sep + "laser.png"))
     root.title("Laser/Piezo manipulator")
     root.resizable(0, 0)
-    # root.geometry("250x450")
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)

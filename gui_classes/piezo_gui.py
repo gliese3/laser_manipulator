@@ -1,4 +1,4 @@
-import os, sys, inspect, path
+import os, sys, path
 
 # add parent dir to Python search path
 _directory = path.Path(__file__).abspath()
@@ -13,15 +13,16 @@ from tkinter import ttk
 from tkinter.messagebox import showinfo, showwarning, showerror
 from idlelib.tooltip import Hovertip # for tips
 
-from madpiezo import Madpiezo
 import numpy as np
 from time import sleep, time
 import re
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+from madpiezo import Madpiezo
 import Firefly_SW #192.168.1.229
 import Firefly_LW #192.168.1.231
 import zhinst.ziPython, zhinst.utils
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class PiezoManipulation(tk.Frame):
     def __init__(self, master):
@@ -53,9 +54,23 @@ class PiezoManipulation(tk.Frame):
         self.save_r_lf5_var = tk.IntVar(value=1) # save file for R
         self.save_theta_lf5_var = tk.IntVar(value=0) # save file for Theta
 
-        self.mirror_correction_var = tk.IntVar(value=0) # for mirror corection for spectra
-        
-        self.file_name = tk.StringVar()
+        self.file_name = tk.StringVar() # file name to save
+
+        # for mirror corection for spectra
+        self.mirror_correction_var = tk.IntVar(value=0) 
+
+        #* MIRROR CORRECTION MAP FOR SPECTRA; SORT IS NOT NECESSARY
+        #* MOTOR STEPS WILL BE ACCUMULATED WHILE DOING CORRECTION
+        self.mirror_correction_map = [
+            {"wavenum" : 1625, "motor_step" : -100, "sleep_time" : 5},
+            {"wavenum" : 1650, "motor_step" : -200, "sleep_time" : 5},
+            {"wavenum" : 1712, "motor_step" : -750, "sleep_time" : 5},
+            {"wavenum" : 1730, "motor_step" : -750, "sleep_time" : 5},
+            {"wavenum" : 1745, "motor_step" : -250, "sleep_time" : 5},
+            {"wavenum" : 1765, "motor_step" : -350, "sleep_time" : 5},
+            {"wavenum" : 1785, "motor_step" : -100, "sleep_time" : 5},
+            {"wavenum" : 1825, "motor_step" :  300, "sleep_time" : 5}
+        ]        
         
         #* VARIABLES
         self.initialized = False # check initialize status
@@ -69,7 +84,8 @@ class PiezoManipulation(tk.Frame):
         self.rowconfigure(1, weight=1)
         
         #* IMAGES
-        self.logo = tk.PhotoImage(file=_parent_dir + "\images\path22064.png")
+        self.logo = tk.PhotoImage(file=_parent_dir + 
+        os.sep + "images" + os.sep + "path22064.png")
         
         #!+++++++++++++++++++++++ GUI DESCRIPTION +++++++++++++++++++++++++++++
                 
@@ -208,7 +224,7 @@ class PiezoManipulation(tk.Frame):
                             sticky="E")
         
         ## LABEL CURRENT WAVENUMBER
-        self.wavenum_lab_lf2 = tk.Label(self.lf2, text="ν‎, cm⁻¹: ", bg=bg_color)
+        self.wavenum_lab_lf2 = tk.Label(self.lf2, text="ν, cm⁻¹: ", bg=bg_color)
         self.wavenum_lab_lf2.grid(column=0,
                                   row=3, 
                                   padx=5,
@@ -266,10 +282,9 @@ class PiezoManipulation(tk.Frame):
                         sticky="NSEW")
         # stretch row "11" down to the bottom
         self.imaging_frame.rowconfigure(12, weight=1) 
-        
+
         # stretch column "1" to the right
         self.imaging_frame.columnconfigure(1, weight=1)
-        
         
         ## LABEL Z
         self.z_lab_fr_im = ttk.Label(self.imaging_frame,
@@ -280,7 +295,8 @@ class PiezoManipulation(tk.Frame):
                                     "): ")
         self.z_lab_fr_im.grid(column=0, 
                             row=0,
-                            padx=5,
+                            columnspan=2,
+                            padx=(5, 92),
                             pady=(5, 0),
                             sticky="E")
         Hovertip(self.z_lab_fr_im, "Height")
@@ -304,10 +320,11 @@ class PiezoManipulation(tk.Frame):
                                     str(self.XYZ_RIGHT_BORDER) +
                                     "): ")
         self.x1_lab_fr_im.grid(column=0, 
-                               row=1,
-                               padx=5,
-                               pady=(7, 0),
-                               sticky="E")
+                            row=1,
+                            columnspan=2,
+                            padx=(5, 92),
+                            pady=(7, 0),
+                            sticky="E")
         
         ## SPINBOX X1
         self.x1_spin_fr_im = ttk.Spinbox(self.imaging_frame,
@@ -328,9 +345,10 @@ class PiezoManipulation(tk.Frame):
                                     str(self.XYZ_RIGHT_BORDER) +
                                     "): ")
         self.y1_lab_fr_im.grid(column=0,
-                               row=2, 
-                               padx=5,
-                               sticky="E")
+                                row=2, 
+                                columnspan=2,
+                                padx=(5, 92),
+                                sticky="E")
         
         ## SPINBOX Y1
         self.y1_spin_fr_im = ttk.Spinbox(self.imaging_frame,
@@ -350,10 +368,11 @@ class PiezoManipulation(tk.Frame):
                                     str(self.XYZ_RIGHT_BORDER) +
                                     "): ")
         self.x2_lab_fr_im.grid(column=0, 
-                               row=3, 
-                               padx=5,
-                               pady=(7, 0),
-                               sticky="E")
+                            row=3, 
+                            columnspan=2,
+                            padx=(5, 92),
+                            pady=(7, 0),
+                            sticky="E")
         
         ## SPINBOX X2
         self.x2_spin_fr_im = ttk.Spinbox(self.imaging_frame,
@@ -374,9 +393,10 @@ class PiezoManipulation(tk.Frame):
                                     str(self.XYZ_RIGHT_BORDER) +
                                     "): ")
         self.y2_lab_fr_im.grid(column=0,
-                                row=4,
-                                padx=5,
-                                sticky="E")
+                            row=4,
+                            columnspan=2,
+                            padx=(5, 92),
+                            sticky="E")
         
         ## SPINBOX Y2
         self.y2_spin_fr_im = ttk.Spinbox(self.imaging_frame, 
@@ -391,10 +411,11 @@ class PiezoManipulation(tk.Frame):
         ## LABEL ΔX
         self.delta_x_lab_fr_im = ttk.Label(self.imaging_frame, text="ΔX, μm: ")
         self.delta_x_lab_fr_im.grid(column=0,
-                                    row=5,
-                                    padx=5,
-                                    pady=(7, 0),
-                                    sticky="E")
+                                row=5,
+                                columnspan=2,
+                                padx=(5, 92),
+                                pady=(7, 0),
+                                sticky="E")
         
         ## SPINBOX ΔX
         self.delta_x_spin_fr_im = ttk.Spinbox(self.imaging_frame,
@@ -411,7 +432,8 @@ class PiezoManipulation(tk.Frame):
         self.delta_y_lab_fr_im = ttk.Label(self.imaging_frame, text="ΔY, μm: ")
         self.delta_y_lab_fr_im.grid(column=0,
                                     row=6,
-                                    padx=5,
+                                    columnspan=2,
+                                    padx=(5, 92),
                                     sticky="E")
         
         ## SPINBOX ΔY
@@ -429,7 +451,8 @@ class PiezoManipulation(tk.Frame):
                                                       text="Scan wavenumber, cm⁻¹: ")
         self.scan_wavenumber_lab_fr_im.grid(column=0,
                                             row=7,
-                                            padx=5,
+                                            columnspan=2,
+                                            padx=(5, 92),
                                             pady=(7, 0),
                                             sticky="E")
         
@@ -527,15 +550,15 @@ class PiezoManipulation(tk.Frame):
         self.imag_prog_bar_fr_im = ttk.Progressbar(self.imaging_frame, 
                                 orient="horizontal",
                                 mode="determinate")
-        self.imag_prog_bar_fr_im.grid(column=1, 
+        self.imag_prog_bar_fr_im.grid(column=0, 
                                 row=13,
-                                padx=(0, 5),
+                                columnspan=2,
+                                padx=(90, 5),
                                 pady=(10, 7), 
                                 sticky="SEW")  
         
         #*++++++++++++++++++++++ /FRAME IMAGING +++++++++++++++++++++++++++++++          
         
-       
         #*+++++++++++++++++++++++++ FRAME SPECTRA +++++++++++++++++++++++++++++
        
         ## FRAME SPECTRA
@@ -551,20 +574,21 @@ class PiezoManipulation(tk.Frame):
         # stretch column "1" to the right
         self.spectra_frame.columnconfigure(1, weight=1)  
         
-        ## LABEL ν‎1
+        ## LABEL ν1
         self.wavenum1_lab_fr_sp = ttk.Label(self.spectra_frame,
-                                    text="ν‎1, cm⁻¹ (" +
+                                    text="ν1, cm⁻¹ (" +
                                     str(self.WAVENUM_LEFT_BORDER) +
                                     "-" +
                                     str(self.WAVENUM_RIGHT_BORDER) +
                                     "): ")
         self.wavenum1_lab_fr_sp.grid(column=0, 
                             row=0,
-                            padx=(5, 5),
+                            columnspan=2,
+                            padx=(5, 92),
                             pady=(5, 0),
                             sticky="E")
         
-        ## SPINBOX ν‎1
+        ## SPINBOX ν1
         self.wavenum1_spin_fr_sp = ttk.Spinbox(self.spectra_frame,
                                 from_=self.WAVENUM_LEFT_BORDER,
                                 to=self.WAVENUM_RIGHT_BORDER,
@@ -575,20 +599,21 @@ class PiezoManipulation(tk.Frame):
                               pady=(5, 0),
                               sticky="E")
         
-        ## LABEL ν‎2
+        ## LABEL ν2
         self.wavenum2_lab_fr_sp = ttk.Label(self.spectra_frame,
-                                    text="ν‎2, cm⁻¹ (" +
+                                    text="ν2, cm⁻¹ (" +
                                     str(self.WAVENUM_LEFT_BORDER) +
                                     "-" +
                                     str(self.WAVENUM_RIGHT_BORDER) +
                                     "): ")
         self.wavenum2_lab_fr_sp.grid(column=0, 
                             row=1,
-                            padx=(5, 5),
+                            columnspan=2,
+                            padx=(5, 92),
                             pady=(7, 0),
                             sticky="E")
         
-        ## SPINBOX ν‎2
+        ## SPINBOX ν2
         self.wavenum2_spin_fr_sp = ttk.Spinbox(self.spectra_frame,
                                 from_=self.WAVENUM_LEFT_BORDER,
                                 to=self.WAVENUM_RIGHT_BORDER,
@@ -604,11 +629,12 @@ class PiezoManipulation(tk.Frame):
                                     text="Δν, cm⁻¹: ")
         self.delta_wavenum_lab_fr_sp.grid(column=0, 
                                         row=2,
-                                        padx=(5, 5),
+                                        columnspan=2,
+                                        padx=(5, 92),
                                         pady=(7, 0),
                                         sticky="E")
                     
-        ## SPINBOX Δν‎
+        ## SPINBOX Δν
         self.delta_wavenum_spin_fr_sp = ttk.Spinbox(self.spectra_frame,
                                 from_=0,
                                 to=self.WAVENUM_RIGHT_BORDER,
@@ -618,7 +644,6 @@ class PiezoManipulation(tk.Frame):
                                           padx=5,
                                           pady=(7, 0),
                                           sticky="E")
-        
         
         ## CHECKBUTTON LOG TO CONSOLE
         self.log_to_console_checkbut_fr_sp = ttk.Checkbutton(self.spectra_frame,
@@ -664,7 +689,6 @@ class PiezoManipulation(tk.Frame):
                                         pady=5,
                                         sticky="E")
 
-        
         ## BUTTON START
         self.start_button_fr_sp = ttk.Button(self.spectra_frame,
                                         text="Start spectra", 
@@ -680,14 +704,14 @@ class PiezoManipulation(tk.Frame):
         self.spec_prog_bar_fr_sp = ttk.Progressbar(self.spectra_frame, 
                                 orient="horizontal",
                                 mode="determinate")
-        self.spec_prog_bar_fr_sp.grid(column=1, 
+        self.spec_prog_bar_fr_sp.grid(column=0, 
                                 row=6,
-                                padx=(0, 5),
+                                columnspan=2,
+                                padx=(85, 5),
                                 pady=(10, 7), 
                                 sticky="SEW")  
         
         #*+++++++++++++++++++++++++ /FRAME SPECTRA ++++++++++++++++++++++++++++
-        
         
         #*+++++++++++++++++++++++ ADD FRAMES TO NOTEBOOK ++++++++++++++++++++++
         
@@ -695,7 +719,6 @@ class PiezoManipulation(tk.Frame):
         self.nb.add(self.spectra_frame, text="Spectra")
         
         #*+++++++++++++++++++++++ /ADD FRAMES TO NOTEBOOK +++++++++++++++++++++
-
 
         #*++++++++++++++ LABELFRAME LOCK-IN PARAMETERS ++++++++++++++++++++++++
         
@@ -800,7 +823,6 @@ class PiezoManipulation(tk.Frame):
         
         #*++++++++++++++ /LABELFRAME LOCK-IN PARAMETERS +++++++++++++++++++++++       
 
-
         #*+++++++++++++++++++++++++ SETTIGNS ++++++++++++++++++++++++++++++++++
         
         self.lf6 = ttk.LabelFrame(self, text='Settigns')
@@ -860,6 +882,7 @@ as fast as it can while disabling\nsome tracking functions and emergency abort")
                       sticky="SEW",
                       pady=(140, 0),
                       padx=5)
+        self.lf5.columnconfigure(1, weight=1)
         
         ## LABEL SAVE FILE
         self.save_file_lab_lf5 = ttk.Label(self.lf5, text="Enter file name: ")
@@ -870,7 +893,6 @@ as fast as it can while disabling\nsome tracking functions and emergency abort")
         
         ## ENTRY SAVE FILE
         self.save_file_entry_lf5 = ttk.Entry(self.lf5, 
-                                             width=26, 
                                              textvariable=self.file_name)
         self.save_file_entry_lf5.grid(column=1, 
                                       row=0,
@@ -941,7 +963,7 @@ hardware and software")
     
     def on_monitor_current_r(self):
         """
-        Monitor current R value
+        Monitor current R value.
         
         """
         text = self.monitor_current_r_but_lf6["text"]
@@ -964,7 +986,7 @@ hardware and software")
 
     def read_position(self):
         """
-        Read and write position of piezo stage
+        Read and write position of piezo stage.
 
         """
         coords = self.piezo.get_position()
@@ -975,7 +997,7 @@ hardware and software")
 
     def xyz_is_in_proper_range(self, x, y, z):
         """
-        Checks that x, y, z coords are in proper range
+        Checks that x, y, z coords are in proper range.
 
         """
         flag = ((self.XYZ_LEFT_BORDER <= x <= self.XYZ_RIGHT_BORDER) and
@@ -993,7 +1015,7 @@ hardware and software")
         """
         self.piezo.goxy(x, y)
         self.piezo.goz(z)
-        sleep(self.SLEEP_TIME) # "sleep" for gui
+        sleep(self.SLEEP_TIME)
         self.read_position() # write current position 
 
 
@@ -1048,7 +1070,7 @@ hardware and software")
 
     def on_initialize(self):
         """
-        Action when "Initialize" button is clicked 
+        Action when "Initialize" button is clicked. 
         
         """
         text = self.initialize_button["text"]
@@ -1171,16 +1193,15 @@ hardware and software")
         delta_x_bool = 0 < delta_x <= (x2 - x1)
         delta_y_bool = 0 < delta_y <= (y2 - y1)
         
-        total_bool = (z_bool * x1_bool * y1_bool * x2_bool * y2_bool * 
-                      delta_x_bool * delta_y_bool)
+        total_bool = all(z_bool , x1_bool, y1_bool, x2_bool, y2_bool,
+                        delta_x_bool, delta_y_bool)
         return total_bool
     
     
-    ## CHECKING LOCK-IN PARAMETERS
     def is_lockin_param_good(self, filter_slope, time_constant, 
                     data_transafer_rate, scaling, enable_external_channel):
         """
-        Check if entered lock-in parameters are good
+        Check if entered lock-in parameters are good.
         
         """
         
@@ -1191,7 +1212,7 @@ hardware and software")
 
     def on_save_file(self):
         """
-        Save file
+        Save file.
 
         """
         need_save_r = self.save_r_lf5_var.get()
@@ -1283,27 +1304,13 @@ Documents\\Measurements\\Spectra\\"
                 vmin=0, vmax=1, interpolation=interpolation, 
                 animated=True)
             
-            #! colorbar is not updating in a loop. Thus, it is off
-
-            # divider1 = make_axes_locatable(ax[0])
-            # cax1 = divider1.append_axes("right", size="5%", pad=0.3)
-            
-            # divider2 = make_axes_locatable(ax[1])
-            # cax2 = divider2.append_axes("right", size="5%", pad=0.3)
-            
-            # # add colorbars to plots
-            # fig.colorbar(plot_r, cax=cax1)
-            # fig.colorbar(plot_theta, cax=cax2)
-            
             plt.pause(0.05)
-            
             plt.show(block=False)
             
             bg = fig.canvas.copy_from_bbox(fig.bbox)
             
             ax[0].draw_artist(plot_r)
             ax[1].draw_artist(plot_theta)
-            
             fig.canvas.blit(fig.bbox)
             
             return plot_r, plot_theta, fig, ax, bg
@@ -1321,14 +1328,9 @@ Documents\\Measurements\\Spectra\\"
                 vmin=0, vmax=1, interpolation=interpolation,
                 animated=True) 
             
-            #! colorbar is not updating in a loop. Thus, it is off
-
-            # add colorbar to plots
-            # fig.colorbar(plot_r)
-            
             plt.pause(0.05)
-            
             plt.show(block=False)
+
             bg = fig.canvas.copy_from_bbox(fig.bbox)
             ax.draw_artist(plot_r)
             fig.canvas.blit(fig.bbox)
@@ -1347,15 +1349,10 @@ Documents\\Measurements\\Spectra\\"
                 extent=[self.x1, self.x2, self.y1, self.y2],
                 vmin=0, vmax=1, interpolation=interpolation, 
                 animated=True)
-            
-            #! colorbar is not updating in a loop. Thus, it is off
 
-            # add colorbar to plots
-            # fig.colorbar(plot_theta)
-            
             plt.pause(0.05)
-            plt.tight_layout()
             plt.show(block=False)
+
             bg = fig.canvas.copy_from_bbox(fig.bbox)
             ax.draw_artist(plot_theta)
             fig.canvas.blit(fig.bbox)
@@ -1368,13 +1365,14 @@ Documents\\Measurements\\Spectra\\"
         An action when "Apply" button (IMAGING) is pressed.
         
         """
-        # set eperiment type for "save" procedure
+        # set experiment type for "save" procedure
         self.experiment_type = "Imaging"
         
         self.save_but_lf5.configure(state="disable")
         
         if self.initialized: # if piezo initialized
             try:    
+
                 # read scan area parameters
                 self.z = round( float(self.z_spin_fr_im.get()), 2)
                 
@@ -1415,7 +1413,7 @@ Documents\\Measurements\\Spectra\\"
             time_constant, data_transafer_rate, scaling, enable_external_channel)
                             
             # True if everything is fine
-            is_proper_values = scan_param_bool and lockin_param_bool  
+            is_proper_values = all(scan_param_bool, lockin_param_bool)
             
             if is_proper_values != 1:
                 showwarning(message="Check entered values for consistency!")
@@ -1458,7 +1456,7 @@ Documents\\Measurements\\Spectra\\"
             
             # 0.05 sec is needed for getting data from lock-in
             needed_time_in_min = round(((self.INTEGRATION_TIME_IMAGING +\
-0.05) * len_x * len_y) / 60, 2) 
+                                                0.05) * len_x * len_y) / 60, 2) 
             
             # write aprox time for experiment
             self.take_time_lab_fr_im['text'] = ("Needed time: ~" + 
@@ -1473,7 +1471,7 @@ Documents\\Measurements\\Spectra\\"
      
     def on_imag_start(self):  
         """
-        Action when "Start Imaging" button is clicked
+        Action when "Start Imaging" button is clicked.
         
         """      
         
@@ -1493,13 +1491,11 @@ Documents\\Measurements\\Spectra\\"
         
         # set values for progressbar
         if self.fast_mode_var.get() == 0:
-            prog_bar_values = np.linspace(1, 100, length)
-            prog_bar_values.astype(int) # convert to int       
+            prog_bar_values = np.linspace(1, 100, length).astype(int)   
         
         total_time_min = 0 # for time accumulation
         
         ## PLOT PRE-TREATMENT
-        
         # check if there is something to plot from checkbuttons
         need_plot_r = self.plot_r_var_fr_im.get()
         need_plot_theta = self.plot_theta_var_fr_im.get()
@@ -1571,7 +1567,6 @@ Documents\\Measurements\\Spectra\\"
                     
                     # change value in progress bar 
                     self.imag_prog_bar_fr_im["value"] = prog_bar_values[step]
-                    # self.update_idletasks() # try to update prog bar
 
                 # go to the next position and read position
                 self.piezo.goxy(self.x_pattern[index], self.y_pattern[index])
@@ -1715,7 +1710,6 @@ Documents\\Measurements\\Spectra\\"
                 fig.canvas.blit(fig.bbox)
                 fig.canvas.flush_events()
 
-                plt.tight_layout()
                 plt.show()
             
             # plot R
@@ -1772,20 +1766,12 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
             self.save_but_lf5.configure(state="enable")
             self.take_time_lab_fr_im['text'] = ""
 
-            # maybe not needed
-            
-            # try:
-            #     self.piezo_stop() # stop piezo
-            # except Exception:
-            #     showerror(message="Error stopping piezo after imaging!")
-
-
     #!============================ SPECTRA FUNCTIONS ==========================
     
     def on_spec_apply_parameters(self):
 
         """
-        Action when "Apply Parameters" for Spectra is clicked
+        Action when "Apply Parameters" for Spectra is clicked.
 
         """
         
@@ -1794,6 +1780,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
         
         if self.initialized:
             try:    
+
                 # read spectra parameters
                 wavenum1 = int(self.wavenum1_spin_fr_sp.get())
                 wavenum2 = int(self.wavenum2_spin_fr_sp.get())
@@ -1823,7 +1810,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                                                         enable_external_channel)
                             
             # True if everything is fine
-            is_proper_values = spec_param_bool and lockin_param_bool  
+            is_proper_values = all(spec_param_bool, lockin_param_bool)  
             
             if is_proper_values != 1:
                 showwarning(message="Check entered values for consistency!")
@@ -1845,7 +1832,8 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
             self.len_wavenum = int( ((wavenum2 - wavenum1) / delta_wavenum) ) + 1
     
             # an array of wavelengths
-            self.wavenum_pattern = np.linspace(wavenum1, wavenum2, self.len_wavenum)
+            self.wavenum_pattern = np.linspace(wavenum1, wavenum2, 
+                                                self.len_wavenum)
             
             # go to initial wavelength
             self.ff3.go_to_wavelength(wavenum1)
@@ -1855,7 +1843,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
             self.start_button_fr_sp.configure(state="enable")
             
             needed_time_in_min = round(((self.INTEGRATION_TIME_SPECTRA +\
-0.05 + 0.5) * self.len_wavenum) / 60, 2) 
+            0.05 + 0.5) * self.len_wavenum) / 60, 2) 
             
             # write aprox time for experiment
             self.take_time_lab_fr_sp['text'] = ("Needed time: ~" + 
@@ -1868,7 +1856,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
 
     def on_spec_start(self):
         """
-        Action when "Start Spectra" button is clicked
+        Action when "Start Spectra" button is clicked.
         
         """
         
@@ -1882,9 +1870,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
         
         if self.fast_mode_var.get() == 0:
             # initialize prog bar
-            prog_bar_values = np.linspace(1, 100, scan_shape)
-            prog_bar_values.astype(int) # convert to int
-        
+            prog_bar_values = np.linspace(1, 100, scan_shape).astype(int)        
 
         # read current coords from "Current position" labelframe
         x_coord = round( float(self.x_coord_lab_lf2.cget("text")), 2)
@@ -1908,7 +1894,6 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
             ax.set_xlabel("ν, cm⁻¹")
             ax.set_ylabel("IR absorption")
             ax.grid(visible=True)
-            # ax.set_yticks([]) 
 
             (plot_r, ) = ax.plot(self.wavenum_pattern, r_data)
                  
@@ -1917,16 +1902,19 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
         
         need_write_to_console = self.log_to_console_var_fr_sp.get()
 
-
-        # for mirror position correction
+        # if mirror position correction is needed
         need_mirror_correction = self.mirror_correction_var.get()    
-        if need_mirror_correction and (self.wavenum_pattern[0] > 1625 or
-                                    self.wavenum_pattern[-1] < 1825):
+        if need_mirror_correction:
             try: 
                 import newport
                 self.picomotor = newport.Controller(0x4000,0x104d)
                 self.picomotor.command('4DH')
                 self.interval_reverse = 0
+
+                # to be popped correctly (smallest wavenum is the last)
+                self.mirror_correction_map_used = sorted(self.mirror_correction_map,
+                                            key=lambda d: d["wavenum"], 
+                                            reverse=True)
             except Exception as e:
                 showerror(message=e)
         
@@ -1937,18 +1925,10 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
 
                 wavenum_val = self.wavenum_pattern[index]
 
-                # mirror correction functions
+                # mirror correction
                 if need_mirror_correction:
-                    self.mirror_correction(wavenum_val, (1625, 1628), motor_step=-100, sleep_time=5)
-                    self.mirror_correction(wavenum_val, (1650, 1653), motor_step=-200, sleep_time=5)
-                    self.mirror_correction(wavenum_val, (1712, 1715), motor_step=-750, sleep_time=5)
-                    self.mirror_correction(wavenum_val, (1730, 1733), motor_step=-750, sleep_time=5)
-                    self.mirror_correction(wavenum_val, (1745, 1748), motor_step=-250, sleep_time=5)
-                    self.mirror_correction(wavenum_val, (1765, 1768), motor_step=-350, sleep_time=5)
-                    self.mirror_correction(wavenum_val, (1785, 1788), motor_step=-100, sleep_time=5)
-                    self.mirror_correction(wavenum_val, (1825, 1828), motor_step= 300, sleep_time=5)
-                    
-                
+                    self.mirror_correction(wavenum_val)
+
                 if self.fast_mode_var.get() == 0:
                     self.read_current_wavenumber(self.ff3)
                 
@@ -1973,17 +1953,11 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                     # to broaden limits by 5%
                     eps_min = 0.05 * min_r_value
                     eps_max = 0.05 * max_r_value
-                    ax.set_ylim(min_r_value - eps_min, max_r_value + eps_max) 
+                    ax.set_ylim(min_r_value - eps_min, max_r_value + eps_max)
+
                     fig.canvas.draw()
                     fig.canvas.flush_events()
 
-                    
-                
-                # maybe not needed
-                # sleep(self.INTEGRATION_TIME_SPECTRA) # some pause
-                
-                # record one demodulator sample from the specified node,
-                # data here consist of everything lock-in have
                 sample = self.daq.getSample('/' + self.device + '/demods/0/sample')
                 
                 sample_x = float(sample['x'])
@@ -2043,10 +2017,14 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
         self.read_current_wavenumber(self.ff3, final_wavenumber=initial_wavenum)
 
         if need_mirror_correction:
+
+            # return mirror back
             self.picomotor.command('4DH')
             self.picomotor.command('4PA' + str(- self.interval_reverse))
             sleep(3)
             self.picomotor.command('4DH')
+            showwarning(message="Mirror was turned back but you should\
+re-check it manually before next experiment!")
         
         # add R norm
         r_data_norm = r_data / np.max(r_data)
@@ -2062,14 +2040,14 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
 
     def is_spec_param_good(self, wavenum1, wavenum2, delta_wavenum):
         """
-        CHECKS WHETHER SPEC PARAMETERS ARE GOOD
+        Checks whether spec parameters are good.
         
         """
         wavenum1_bool = self.WAVENUM_LEFT_BORDER <= wavenum1 <= self.WAVENUM_RIGHT_BORDER
         wavenum2_bool = wavenum1 < wavenum2 <= self.WAVENUM_RIGHT_BORDER
-        delta_wavenum_bool = 0 < (wavenum2 - wavenum1)
+        delta_wavenum_bool = 0 < delta_wavenum <= (wavenum2 - wavenum1)
         
-        total_bool = (wavenum1_bool * wavenum2_bool * delta_wavenum_bool)
+        total_bool = all(wavenum1_bool, wavenum2_bool, delta_wavenum_bool)
         return total_bool
     
     
@@ -2094,7 +2072,7 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
                     button.configure(state="disable")
                     
                 while (abs((final_wavenumber - current_wavenumber)) > delta):
-                    self.update()
+                    self.update() # update event loop
                  
                     status = str(ff3.wavelength_status())
                     current_wavenumber = round(float(re.findall(pattern, status)[0]), 2)
@@ -2113,12 +2091,24 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
             except Exception as e:
                 showerror(message=e)
 
-    def mirror_correction(self, wavenum_val, wavenum_range, motor_step, sleep_time=5):
-        if wavenum_range[0] < wavenum_val < wavenum_range[-1]:
+
+    def mirror_correction(self, wavenum_val):
+        """
+        Corrects mirror position to mitigate physical issues.
+
+        """
+
+        dict_val = self.mirror_correction_map_used[-1]
+        wavenum_border = dict_val["wavenum"]
+
+        if wavenum_val >= wavenum_border:
             self.picomotor.command('4DH')
-            self.picomotor.command('4PA' + str(motor_step))
-            sleep(sleep_time)
+            self.picomotor.command('4PA' + str(dict_val["motor_step"]))
+            sleep(dict_val["sleep_time"])
             self.picomotor.command('4DH')
-            self.interval_reverse += motor_step
+            self.interval_reverse += dict_val["motor_step"]
+
+            # delete element if correction procedure was done successfully
+            self.mirror_correction_map_used.pop() 
         else:
             pass
