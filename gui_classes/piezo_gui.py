@@ -20,9 +20,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from madpiezo import Madpiezo
-import Firefly_SW #192.168.1.229
-import Firefly_LW #192.168.1.231
-import zhinst.ziPython, zhinst.utils
+# import Firefly_SW #192.168.1.229
+# import Firefly_LW #192.168.1.231
+# import zhinst.ziPython, zhinst.utils
 
 class PiezoManipulation(tk.Frame):
     def __init__(self, master):
