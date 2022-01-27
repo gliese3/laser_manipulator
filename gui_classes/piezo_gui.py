@@ -19,9 +19,9 @@ import re
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from madpiezo import Madpiezo
-import Firefly_SW #192.168.1.229
-import Firefly_LW #192.168.1.231
+from Madpiezo.madpiezo import Madpiezo
+import Firefly.Firefly_SW #192.168.1.229
+import Firefly.Firefly_LW #192.168.1.231
 import zhinst.ziPython, zhinst.utils
 
 class PiezoManipulation(tk.Frame):
@@ -1305,6 +1305,7 @@ Documents\\Measurements\\Spectra\\"
                 animated=True)
             
             plt.pause(0.05)
+            plt.tight_layout()
             plt.show(block=False)
             
             bg = fig.canvas.copy_from_bbox(fig.bbox)
@@ -1329,6 +1330,7 @@ Documents\\Measurements\\Spectra\\"
                 animated=True) 
             
             plt.pause(0.05)
+            plt.tight_layout()
             plt.show(block=False)
 
             bg = fig.canvas.copy_from_bbox(fig.bbox)
@@ -1351,6 +1353,7 @@ Documents\\Measurements\\Spectra\\"
                 animated=True)
 
             plt.pause(0.05)
+            plt.tight_layout()
             plt.show(block=False)
 
             bg = fig.canvas.copy_from_bbox(fig.bbox)
@@ -1455,7 +1458,7 @@ Documents\\Measurements\\Spectra\\"
             self.start_button_fr_im.configure(state="enable")
             
             # 0.05 sec is needed for getting data from lock-in
-            needed_time_in_min = round(((self.INTEGRATION_TIME_IMAGING +\
+            needed_time_in_min = round(((self.INTEGRATION_TIME_IMAGING +
                                                 0.05) * len_x * len_y) / 60, 2) 
             
             # write aprox time for experiment
@@ -1710,6 +1713,7 @@ Documents\\Measurements\\Spectra\\"
                 fig.canvas.blit(fig.bbox)
                 fig.canvas.flush_events()
 
+                plt.tight_layout()
                 plt.show()
             
             # plot R
@@ -1734,6 +1738,7 @@ Documents\\Measurements\\Spectra\\"
                 fig.canvas.blit(fig.bbox)
                 fig.canvas.flush_events()
 
+                plt.tight_layout()
                 plt.show()
             
             # plot Theta
@@ -1757,6 +1762,7 @@ Documents\\Measurements\\Spectra\\"
                 fig.canvas.blit(fig.bbox)
                 fig.canvas.flush_events()
 
+                plt.tight_layout()
                 plt.show()
     
             
@@ -1842,7 +1848,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
             # make "start spectra" button active
             self.start_button_fr_sp.configure(state="enable")
             
-            needed_time_in_min = round(((self.INTEGRATION_TIME_SPECTRA +\
+            needed_time_in_min = round(((self.INTEGRATION_TIME_SPECTRA +
             0.05 + 0.5) * self.len_wavenum) / 60, 2) 
             
             # write aprox time for experiment
@@ -1896,7 +1902,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
             ax.grid(visible=True)
 
             (plot_r, ) = ax.plot(self.wavenum_pattern, r_data)
-                 
+            plt.tight_layout()     
         
         total_time_min = 0 # for time accumulation 
         
@@ -1906,7 +1912,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
         need_mirror_correction = self.mirror_correction_var.get()    
         if need_mirror_correction:
             try: 
-                import newport
+                import Newport.newport
                 self.picomotor = newport.Controller(0x4000,0x104d)
                 self.picomotor.command('4DH')
                 self.interval_reverse = 0
@@ -2004,9 +2010,8 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 fig.canvas.flush_events()
 
                 plt.ioff()
+                plt.tight_layout()
                 plt.show()
-
-                
         
         print(f"Done! For {scan_shape} steps it took {round(total_time_min, 2)} min.\
 On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
@@ -2070,7 +2075,10 @@ re-check it manually before next experiment!")
                 delta = 3 
                 for button in self.buttons:
                     button.configure(state="disable")
-                    
+                
+                # to emphasize Label
+                self.wavenum_val_lab_lf2.config(relief="groove")
+
                 while (abs((final_wavenumber - current_wavenumber)) > delta):
                     self.update() # update event loop
                  
@@ -2087,7 +2095,10 @@ re-check it manually before next experiment!")
                 # make buttons enabled
                 for button in self.buttons:
                     button.configure(state="enable")
-                    
+
+                # make Label as usual
+                self.wavenum_val_lab_lf2.config(relief="flat")
+
             except Exception as e:
                 showerror(message=e)
 
