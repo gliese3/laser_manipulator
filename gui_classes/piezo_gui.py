@@ -20,9 +20,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from Madpiezo.madpiezo import Madpiezo
-# import Firefly.Firefly_SW # 192.168.1.229
-# import Firefly.Firefly_LW # 192.168.1.231
-# import zhinst.ziPython, zhinst.utils
+import Firefly.Firefly_SW # 192.168.1.229
+import Firefly.Firefly_LW # 192.168.1.231
+import zhinst.ziPython, zhinst.utils
 
 class PiezoManipulation(tk.Frame):
     def __init__(self, master):
@@ -1290,9 +1290,27 @@ Documents\\Measurements\\Spectra\\"
             ax[0].set_title("IR-PHI signal [a.u.]")
             ax[1].set_title("Phase")
             
-            # disable axis
-            ax[0].set_axis_off()
-            ax[1].set_axis_off()
+            ax[0].set_xlabel("μm")
+            ax[1].set_xlabel("μm")
+            
+            ax[0].set_ylabel("μm")
+            ax[1].set_ylabel("μm")
+            
+            
+            # to drop spines
+            for i in range(2):
+                # Move left and bottom spines outward by 10 points
+                ax[i].spines.left.set_position(('outward', 10))
+                ax[i].spines.bottom.set_position(('outward', 10))
+                
+                # Hide the right and top spines
+                ax[i].spines.right.set_visible(False)
+                ax[i].spines.top.set_visible(False)
+                
+                # Only show ticks on the left and bottom spines
+                ax[i].yaxis.set_ticks_position('left')
+                ax[i].xaxis.set_ticks_position('bottom')
+                
             
             plot_r = ax[0].imshow(self.r_data, cmap=cmap, 
                     extent=[self.x1, self.x2, self.y1, self.y2], 
@@ -1319,10 +1337,22 @@ Documents\\Measurements\\Spectra\\"
         elif need_plot_r:
                         
             fig, ax = plt.subplots(1, 1)
-            ax.set_title("IR-PHI signal [a.u.]")        
+            ax.set_title("IR-PHI signal [a.u.]")    
+            ax.set_xlabel("μm")            
+            ax.set_ylabel("μm")   
             
-            # disable axis
-            ax.set_axis_off()
+            # to drop spines
+            # Move left and bottom spines outward by 10 points
+            ax.spines.left.set_position(('outward', 10))
+            ax.spines.bottom.set_position(('outward', 10))
+            
+            # Hide the right and top spines
+            ax.spines.right.set_visible(False)
+            ax.spines.top.set_visible(False)
+            
+            # Only show ticks on the left and bottom spines
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_ticks_position('bottom')
             
             plot_r = ax.imshow(self.r_data, cmap=cmap, 
                 extent=[self.x1, self.x2, self.y1, self.y2],
@@ -1343,9 +1373,21 @@ Documents\\Measurements\\Spectra\\"
                 
             fig, ax = plt.subplots(1, 1)
             ax.set_title("Phase")        
+            ax.set_xlabel("μm")            
+            ax.set_ylabel("μm")   
             
-            # disable axis
-            ax.set_axis_off()
+            # to drop spines
+            # Move left and bottom spines outward by 10 points
+            ax.spines.left.set_position(('outward', 10))
+            ax.spines.bottom.set_position(('outward', 10))
+            
+            # Hide the right and top spines
+            ax.spines.right.set_visible(False)
+            ax.spines.top.set_visible(False)
+            
+            # Only show ticks on the left and bottom spines
+            ax.yaxis.set_ticks_position('left')
+            ax.xaxis.set_ticks_position('bottom')
             
             plot_theta = ax.imshow(self.theta_data, cmap=cmap, 
                 extent=[self.x1, self.x2, self.y1, self.y2],
