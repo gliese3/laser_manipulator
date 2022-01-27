@@ -20,9 +20,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from Madpiezo.madpiezo import Madpiezo
-import Firefly.Firefly_SW #192.168.1.229
-import Firefly.Firefly_LW #192.168.1.231
-import zhinst.ziPython, zhinst.utils
+# import Firefly.Firefly_SW # 192.168.1.229
+# import Firefly.Firefly_LW # 192.168.1.231
+# import zhinst.ziPython, zhinst.utils
 
 class PiezoManipulation(tk.Frame):
     def __init__(self, master):
@@ -1956,10 +1956,9 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                     if r_value < min_r_value : min_r_value = r_value
                     if r_value > max_r_value : max_r_value = r_value
 
-                    # to broaden limits by 5%
-                    eps_min = 0.05 * min_r_value
-                    eps_max = 0.05 * max_r_value
-                    ax.set_ylim(min_r_value - eps_min, max_r_value + eps_max)
+                    # to broaden upper limit by 10%
+                    eps_max = 0.1 * max_r_value
+                    ax.set_ylim(min_r_value, max_r_value + eps_max)
 
                     fig.canvas.draw()
                     fig.canvas.flush_events()
@@ -2001,10 +2000,9 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 if r_value < min_r_value : min_r_value = r_value
                 if r_value > max_r_value : max_r_value = r_value
 
-                # to broaden limits by 5%
-                eps_min = 0.05 * min_r_value
-                eps_max = 0.05 * max_r_value
-                ax.set_ylim(min_r_value - eps_min, max_r_value + eps_max)
+                # to broaden upper limit by 10%
+                eps_max = 0.1 * max_r_value
+                ax.set_ylim(min_r_value, max_r_value + eps_max)
 
                 fig.canvas.draw()
                 fig.canvas.flush_events()
