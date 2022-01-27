@@ -25,7 +25,7 @@ To run gui `run.py` (with console) or `run_no_console.pyw` (without console) fil
 
 ### Imaging
 
-![Imaging](/images/Examples/imaging_2_speed_x3.gif "Imaging example, speed x3")
+![Imaging](https://github.com/gliese3/laser_manipulator/blob/test/images/Examples/imaging_1.gif "Imaging example, speed x3")
 
 ### Spectroscopy
 
