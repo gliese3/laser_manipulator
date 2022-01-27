@@ -25,8 +25,8 @@ To run gui `run.py` (with console) or `run_no_console.pyw` (without console) fil
 
 ### Imaging
 
-![Imaging](/images/Examples/imaging_2 (speed x3).gif "Imaging example, speed x3")
+![Imaging](/images/Examples/imaging_2_speed_x3.gif "Imaging example, speed x3")
 
 ### Spectroscopy
 
-![Imaging](/images/Examples/spectroscopy_1 (speed x7).gif "Spectroscopy example, speed x7")
+![Spectroscopy](/images/Examples/spectroscopy_1_speed_x7.gif "Spectroscopy example, speed x7")
