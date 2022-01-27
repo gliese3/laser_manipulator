@@ -10,13 +10,23 @@ A simple gui that manipulates infrared photothermal heterodyne imaging (IR-PHI) 
 ## Dependecies
 
 To run gui correctly these python packages must be installed prior running:
-- ```tkinter```
-- ```numpy```
-- ```matplotlib```
+- `tkinter`
+- `numpy`
+- `matplotlib`
 - ```path```
-- ```idlelib.tooltip```
-- ```zhinst```
+- `idlelib.tooltip`
+- `zhinst`
 
 ## Running
 
-To run gui ```run.py``` (with console) or ```run_no_console.pyw``` (without console) files should be used.
+To run gui `run.py` (with console) or `run_no_console.pyw` (without console) files should be used.
+
+## Examples
+
+### Imaging
+
+![Imaging](/images/Examples/imaging_2 (speed x3).gif "Imaging example, speed x3")
+
+### Spectroscopy
+
+![Imaging](/images/Examples/spectroscopy_1 (speed x7).gif "Spectroscopy example, speed x7")
