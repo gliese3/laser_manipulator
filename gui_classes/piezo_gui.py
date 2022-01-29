@@ -1752,10 +1752,7 @@ Documents\\Measurements\\Spectra\\"
                 ax[0].draw_artist(plot_r)
                 ax[1].draw_artist(plot_theta)
                 
-                fig.canvas.blit(fig.bbox)
-                fig.canvas.flush_events()
-
-                plt.tight_layout()
+                plt.pause(0.05)
                 plt.show()
             
             # plot R
@@ -1799,27 +1796,24 @@ Documents\\Measurements\\Spectra\\"
                 cax = divider.append_axes("right", size="5%", pad=0.3)
                 fig.colorbar(plot_theta, cax=cax, orientation='vertical')
                 
-                # fig.canvas.blit(fig.bbox)
-                
-
-                # fig.canvas.draw()
-                # plt.tight_layout()
+                plt.pause(0.05)
                 plt.show()
     
             
             print(f"\n\nDone! For {length} steps it took {round(total_time_min, 2)} min.\
 On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
-            
-            self.save_but_lf5.configure(state="enable")
+                
             self.take_time_lab_fr_im['text'] = ""
+            self.start_button_fr_im.configure(state="disable")
+            
             # make buttons enabled
+            self.save_but_lf5.configure(state="enable")
             self.go_button_lf1.configure(state="enable")
             self.go_to_origin_button_lf1.configure(state="enable")
 
     #!============================ SPECTRA FUNCTIONS ==========================
     
     def on_spec_apply_parameters(self):
-
         """
         Action when "Apply Parameters" for Spectra is clicked.
 
@@ -1957,7 +1951,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
         if need_mirror_correction:
             try: 
                 import Newport.newport as newport
-                self.picomotor = newport.Controller(0x4000,0x104d)
+                self.picomotor = newport.Controller(0x4000, 0x104d)
                 self.picomotor.command('4DH')
                 self.interval_reverse = 0
 
@@ -1978,7 +1972,6 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 # mirror correction
                 if need_mirror_correction:
                     self.mirror_correction(wavenum_val)
-                    # self.update()
 
                 if self.fast_mode_var.get() == 0:
                     self.read_current_wavenumber(self.ff3)
@@ -2001,7 +1994,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                     if r_value < min_r_value : min_r_value = r_value
                     if r_value > max_r_value : max_r_value = r_value
 
-                    # to broaden upper limit by 10%
+                    # to broaden plot upper limit by 10%
                     eps_max = 0.1 * max_r_value
                     ax.set_ylim(min_r_value, max_r_value + eps_max)
 
@@ -2014,7 +2007,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 sample_y = float(sample['y'])
                 
                 # extract R value from sample data
-                r_value = np.hypot(sample_x, sample_y) # sqrt(x^2 + y^2)
+                r_value = np.hypot(sample_x, sample_y) # =sqrt(x^2 + y^2)
                 r_data[index] = r_value                
             
                 t2 = time() # finish time
@@ -2045,7 +2038,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 if r_value < min_r_value : min_r_value = r_value
                 if r_value > max_r_value : max_r_value = r_value
 
-                # to broaden upper limit by 10%
+                # to broaden plot upper limit by 10%
                 eps_max = 0.1 * max_r_value
                 ax.set_ylim(min_r_value, max_r_value + eps_max)
 
@@ -2068,7 +2061,7 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
 
             # return mirror back
             self.picomotor.command('4DH')
-            text = "Mirror is going back..."
+            text = "Mirror is going back. Wait..."
             sleep_time = 5
 
             top_window(text, sleep_time)
