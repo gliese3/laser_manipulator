@@ -13,9 +13,11 @@ To run gui correctly these python packages must be installed prior running:
 - `tkinter`
 - `numpy`
 - `matplotlib`
-- ```path```
+- `path`
 - `idlelib.tooltip`
 - `zhinst`
+- `pyusb`
+- `libusb`
 
 ## Running
 

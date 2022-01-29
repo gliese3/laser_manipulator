@@ -20,8 +20,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from Madpiezo.madpiezo import Madpiezo
-import Firefly.Firefly_SW # 192.168.1.229
-import Firefly.Firefly_LW # 192.168.1.231
+import Firefly.Firefly_SW as Firefly_SW # 192.168.1.229
+import Firefly.Firefly_LW as Firefly_LW # 192.168.1.231
 import zhinst.ziPython, zhinst.utils
 
 class PiezoManipulation(tk.Frame):
@@ -1193,8 +1193,8 @@ hardware and software")
         delta_x_bool = 0 < delta_x <= (x2 - x1)
         delta_y_bool = 0 < delta_y <= (y2 - y1)
         
-        total_bool = all(z_bool , x1_bool, y1_bool, x2_bool, y2_bool,
-                        delta_x_bool, delta_y_bool)
+        total_bool = all([z_bool , x1_bool, y1_bool, x2_bool, y2_bool,
+                        delta_x_bool, delta_y_bool])
         return total_bool
     
     
@@ -1322,8 +1322,8 @@ Documents\\Measurements\\Spectra\\"
                 vmin=0, vmax=1, interpolation=interpolation, 
                 animated=True)
             
-            plt.pause(0.05)
             plt.tight_layout()
+            plt.pause(0.05)
             plt.show(block=False)
             
             bg = fig.canvas.copy_from_bbox(fig.bbox)
@@ -1359,8 +1359,8 @@ Documents\\Measurements\\Spectra\\"
                 vmin=0, vmax=1, interpolation=interpolation,
                 animated=True) 
             
-            plt.pause(0.05)
             plt.tight_layout()
+            plt.pause(0.05)
             plt.show(block=False)
 
             bg = fig.canvas.copy_from_bbox(fig.bbox)
@@ -1394,8 +1394,8 @@ Documents\\Measurements\\Spectra\\"
                 vmin=0, vmax=1, interpolation=interpolation, 
                 animated=True)
 
-            plt.pause(0.05)
             plt.tight_layout()
+            plt.pause(0.05)
             plt.show(block=False)
 
             bg = fig.canvas.copy_from_bbox(fig.bbox)
@@ -1458,7 +1458,7 @@ Documents\\Measurements\\Spectra\\"
             time_constant, data_transafer_rate, scaling, enable_external_channel)
                             
             # True if everything is fine
-            is_proper_values = all(scan_param_bool, lockin_param_bool)
+            is_proper_values = all([scan_param_bool, lockin_param_bool])
             
             if is_proper_values != 1:
                 showwarning(message="Check entered values for consistency!")
@@ -1777,10 +1777,7 @@ Documents\\Measurements\\Spectra\\"
                 cax = divider.append_axes("right", size="5%", pad=0.3)
                 fig.colorbar(plot_r, cax=cax, orientation='vertical')
                 
-                fig.canvas.blit(fig.bbox)
-                fig.canvas.flush_events()
-
-                plt.tight_layout()
+                plt.pause(0.05)
                 plt.show()
             
             # plot Theta
@@ -1797,14 +1794,16 @@ Documents\\Measurements\\Spectra\\"
                 
                 ax.draw_artist(plot_theta)
 
+                fig.canvas.flush_events()
                 divider = make_axes_locatable(ax)
                 cax = divider.append_axes("right", size="5%", pad=0.3)
                 fig.colorbar(plot_theta, cax=cax, orientation='vertical')
                 
-                fig.canvas.blit(fig.bbox)
-                fig.canvas.flush_events()
+                # fig.canvas.blit(fig.bbox)
+                
 
-                plt.tight_layout()
+                # fig.canvas.draw()
+                # plt.tight_layout()
                 plt.show()
     
             
@@ -1813,6 +1812,9 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
             
             self.save_but_lf5.configure(state="enable")
             self.take_time_lab_fr_im['text'] = ""
+            # make buttons enabled
+            self.go_button_lf1.configure(state="enable")
+            self.go_to_origin_button_lf1.configure(state="enable")
 
     #!============================ SPECTRA FUNCTIONS ==========================
     
@@ -1858,7 +1860,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                                                         enable_external_channel)
                             
             # True if everything is fine
-            is_proper_values = all(spec_param_bool, lockin_param_bool)  
+            is_proper_values = all([spec_param_bool, lockin_param_bool])  
             
             if is_proper_values != 1:
                 showwarning(message="Check entered values for consistency!")
@@ -1951,10 +1953,10 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
         need_write_to_console = self.log_to_console_var_fr_sp.get()
 
         # if mirror position correction is needed
-        need_mirror_correction = self.mirror_correction_var.get()    
+        need_mirror_correction = self.mirror_correction_var.get() 
         if need_mirror_correction:
             try: 
-                import Newport.newport
+                import Newport.newport as newport
                 self.picomotor = newport.Controller(0x4000,0x104d)
                 self.picomotor.command('4DH')
                 self.interval_reverse = 0
@@ -1976,6 +1978,7 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 # mirror correction
                 if need_mirror_correction:
                     self.mirror_correction(wavenum_val)
+                    # self.update()
 
                 if self.fast_mode_var.get() == 0:
                     self.read_current_wavenumber(self.ff3)
@@ -2065,12 +2068,13 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
 
             # return mirror back
             self.picomotor.command('4DH')
-            self.picomotor.command('4PA' + str(- self.interval_reverse))
-            sleep(3)
+            text = "Mirror is going back..."
+            sleep_time = 5
+
+            top_window(text, sleep_time)
+
             self.picomotor.command('4DH')
-            showwarning(message="Mirror was turned back but you should\
-re-check it manually before next experiment!")
-        
+            
         # add R norm
         r_data_norm = r_data / np.max(r_data)
         
@@ -2082,6 +2086,8 @@ re-check it manually before next experiment!")
         
         # disable "theta" checkbutton when save
         self.save_theta_checkbut_lf5.configure(state="disable")
+        self.start_button_fr_sp.configure(state="disable")
+
 
     def is_spec_param_good(self, wavenum1, wavenum2, delta_wavenum):
         """
@@ -2091,8 +2097,8 @@ re-check it manually before next experiment!")
         wavenum1_bool = self.WAVENUM_LEFT_BORDER <= wavenum1 <= self.WAVENUM_RIGHT_BORDER
         wavenum2_bool = wavenum1 < wavenum2 <= self.WAVENUM_RIGHT_BORDER
         delta_wavenum_bool = 0 < delta_wavenum <= (wavenum2 - wavenum1)
+        total_bool = all([wavenum1_bool, wavenum2_bool, delta_wavenum_bool])
         
-        total_bool = all(wavenum1_bool, wavenum2_bool, delta_wavenum_bool)
         return total_bool
     
     
@@ -2117,7 +2123,7 @@ re-check it manually before next experiment!")
                     button.configure(state="disable")
                 
                 # to emphasize Label
-                self.wavenum_val_lab_lf2.config(relief="groove")
+                self.wavenum_val_lab_lf2.config(bg="yellow")
 
                 while (abs((final_wavenumber - current_wavenumber)) > delta):
                     self.update() # update event loop
@@ -2137,7 +2143,7 @@ re-check it manually before next experiment!")
                     button.configure(state="enable")
 
                 # make Label as usual
-                self.wavenum_val_lab_lf2.config(relief="flat")
+                self.wavenum_val_lab_lf2.config(bg="#ABEBC6")
 
             except Exception as e:
                 showerror(message=e)
@@ -2155,23 +2161,10 @@ re-check it manually before next experiment!")
         if wavenum_val >= wavenum_border:
             self.picomotor.command('4DH')
             self.picomotor.command('4PA' + str(dict_val["motor_step"]))
-
-            # show window
-            top = tk.Toplevel()
-            top.geometry("300x120+800+500")
-            top.title("")
-            lab = tk.Label(top, text = "Mirror correction is in progress...")
-            lab.grid(column=0, row=0)
-
-            # to center label
-            top.rowconfigure(0, weight=1)
-            top.columnconfigure(0, weight=1)
-
-            top.grab_set() # focus on that window
-
-            sleep(dict_val["sleep_time"])
-
-            top.withdraw() # remove window
+            text = "Mirror correction is in progress..."
+            sleep_time = dict_val["sleep_time"]
+            
+            self.top_window(text, sleep_time)
 
             self.picomotor.command('4DH')
             self.interval_reverse += dict_val["motor_step"]
@@ -2181,3 +2174,24 @@ re-check it manually before next experiment!")
         else:
             pass
         
+        
+    def top_window(self, text, time):
+        """
+        Create new "Top level" inform window for some time. 
+        
+        """
+        
+        top = tk.Toplevel()
+        top.geometry("300x120+800+500")
+        top.title("")
+        lab = tk.Label(top, text = text)
+        lab.grid(column=0, row=0)
+        
+        # to center label
+        top.rowconfigure(0, weight=1)
+        top.columnconfigure(0, weight=1)
+        self.update() # to show new window
+
+        sleep(time) # some pause
+
+        top.withdraw() # remove window   
