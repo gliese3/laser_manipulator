@@ -1135,7 +1135,7 @@ hardware and software")
 
         """
         try:
-            self.piezo_go_to_position(0, 0, 0)     
+            self.piezo_go_to_position(50, 50, 50)     
             self.piezo.mcl_close()
             
             self.initialize_button.config(text="Initialize", bg="green")
