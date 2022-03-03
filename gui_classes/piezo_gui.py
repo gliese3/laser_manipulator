@@ -1953,7 +1953,6 @@ On average {round(total_time_min * 1000 * 60 / length, 2)} ms per step.")
                 import Newport.newport as newport
                 self.picomotor = newport.Controller(0x4000, 0x104d)
                 self.picomotor.command('4DH')
-                self.interval_reverse = 0
 
                 # to be popped correctly (smallest wavenum is the last)
                 self.mirror_correction_map_used = sorted(self.mirror_correction_map,
@@ -2059,14 +2058,12 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
 
         if need_mirror_correction:
 
-            # return mirror back
-            self.picomotor.command('4DH')
+            # return mirror to initial position
+            self.picomotor.command('4PA0')
             text = "Mirror is going back. Wait..."
             sleep_time = 5
 
             top_window(text, sleep_time)
-
-            self.picomotor.command('4DH')
             
         # add R norm
         r_data_norm = r_data / np.max(r_data)
@@ -2152,15 +2149,11 @@ On average {round(total_time_min * 1000 * 60 / scan_shape, 2)} ms per step.")
         wavenum_border = dict_val["wavenum"]
 
         if wavenum_val >= wavenum_border:
-            self.picomotor.command('4DH')
             self.picomotor.command('4PA' + str(dict_val["motor_step"]))
             text = "Mirror correction is in progress..."
             sleep_time = dict_val["sleep_time"]
             
             self.top_window(text, sleep_time)
-
-            self.picomotor.command('4DH')
-            self.interval_reverse += dict_val["motor_step"]
 
             # delete last element if correction procedure was done successfully
             self.mirror_correction_map_used.pop() 
